@@ -1,3 +1,5 @@
+//https://nixhacker.com/developing-hypervisior-from-scratch-part-1/
+
 #include<ntifs.h>
 #include<ntddk.h>
 #include<wdm.h>
@@ -11,7 +13,11 @@ extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Reg
 	
 	DriverObject->DriverUnload = DriverUnload;
 
-	g_logical_processor = KeGetCurrentProcessorNumber();
+	//缓存一些数据
+	cached_cpu_data();
+
+
+	g_logical_processor = KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
 	
 
 	print("[+] g_logical_processor %d\n", g_logical_processor);
@@ -22,6 +28,9 @@ extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Reg
 		print("[+] check_hypervisor_can_enable return false\n");
 		return STATUS_SUCCESS;
 	}
+
+	//通过ipi call虚拟化每个核
+	KeIpiGenericCall(virtualize_everycpu_ipi_routine,NULL);
 
 	return STATUS_SUCCESS;
 }

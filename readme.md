@@ -1,1 +1,1 @@
-sbb's hypervisor
+hypervisor

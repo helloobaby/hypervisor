@@ -46,7 +46,3 @@ void stop_hypervisor();
 
 u64 virtualize_everycpu_ipi_routine(u64 Argument);
 u64 stop_virtualize_everycpu_ipi_routine(u64 Argument);
-
-
-void test_vmcs_field();
-u64 read_ctrl_field(u64 a, u64 true_a);

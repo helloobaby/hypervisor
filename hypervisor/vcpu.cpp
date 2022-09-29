@@ -4,6 +4,7 @@
 #include "mm.h"
 #include "utils.h"
 #include "arch.h"
+#include "vmcs_helper.h"
 
 u32 g_logical_processor;
 
@@ -59,7 +60,9 @@ bool load_vmcs(vmcs& vmcs) {
 }
 
 void prepare_vmcs() {
+    init_vmcs_control_fields();
     init_vmcs_host_state();
+    init_vmcs_guest_state();
 }
 
 //解锁对vmxon指令的限制
@@ -96,14 +99,30 @@ void enable_vmx_operation() {
 
 void init_vmcs_control_fields() {
 
-    //Pin-based VM-Excution control字段
+    // Pin-based VM-Excution control字段
+    // intel卷3 A.3.1
     ia32_vmx_pinbased_ctls_register pin_based_ctrl;
-    pin_based_ctrl.flags = 0;
-    pin_based_ctrl.virtual_nmi = 1;
-    pin_based_ctrl.nmi_exiting = 1;
-    pin_based_ctrl.activate_vmx_preemption_timer = 1;
+    pin_based_ctrl.flags = 0;                               //0初始化  
+    write_ctrl_pin_based_safe(pin_based_ctrl);
 
+    // Processor-Based VM-Execution Controls
+    // intel卷3 24.6.2
+    ia32_vmx_procbased_ctls_register proc_based_ctrl;
+    proc_based_ctrl.flags = 0;
+    write_ctrl_proc_based_safe(proc_based_ctrl);
 
+    //上面proc_based_ctrl.activate_secondary_controls未设置,所以下面这部分写不写都行
+    ia32_vmx_procbased_ctls2_register proc_based_ctrl2;
+    proc_based_ctrl2.flags = 0;
+    write_ctrl_proc_based2_safe(proc_based_ctrl2);
+
+    ia32_vmx_exit_ctls_register exit_ctrl;
+    exit_ctrl.flags = 0;
+    write_ctrl_exit_safe(exit_ctrl);
+
+    ia32_vmx_entry_ctls_register entry_ctrl;
+    entry_ctrl.flags = 0;
+    write_ctrl_entry_safe(entry_ctrl);
 
 }
 
@@ -146,8 +165,22 @@ void init_vmcs_host_state() {
     __vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, 0);
     
     //host段基址
+    __vmx_vmwrite(VMCS_HOST_FS_BASE, __readmsr(IA32_FS_BASE));
+    __vmx_vmwrite(VMCS_HOST_GS_BASE, __readmsr(IA32_GS_BASE));
     
+    segment_descriptor_register_64 idt;
+    __sidt(&idt);
 
+    segment_descriptor_register_64 gdt;
+
+    // https://learn.microsoft.com/en-us/cpp/intrinsics/x64-amd64-intrinsics-list?view=msvc-170
+    // 上述url有记载_sgdt,但是intrin.h并没有这个函数的声明,在这里声明一下
+    void _sgdt(void*);  
+    _sgdt(&gdt);
+
+    __vmx_vmwrite(VMCS_HOST_GDTR_BASE,gdt.base_address);
+    __vmx_vmwrite(VMCS_HOST_IDTR_BASE,idt.base_address);
+    //__vmx_vmwrite(VMCS_HOST_TR_BASE, reinterpret_cast<size_t>(&cpu->host_tss));
 
 }
 
@@ -191,7 +224,7 @@ u64 virtualize_everycpu_ipi_routine(u64 Argument) {
     load_vmcs(t->vmcs);     //不执行这个的话vmread\vmwrite都会报错
     prepare_vmcs();
 
-    test_vmcs_field();
+    
     
 
 
@@ -215,20 +248,3 @@ void stop_hypervisor() {
     KeIpiGenericCall(stop_virtualize_everycpu_ipi_routine, NULL);
 }
 
-
-// 有些保留字段设置为0或设置为1是由MSR规定的
-// 这个函数用来分析哪些保留位是设置为1,哪些设置为0
-void test_vmcs_field() {
-    
-    // 32bit vector
-    u32 pin_base_value = read_ctrl_field(IA32_VMX_PINBASED_CTLS, IA32_VMX_TRUE_PINBASED_CTLS);
-    print("[+] pin_base_value %d\n", pin_base_value);
-
-}
-
-// intel3卷A.4
-u64 read_ctrl_field(u64 a, u64 true_a) {
-    ia32_vmx_basic_register vmx_basic;
-    vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
-    return __readmsr(vmx_basic.vmx_controls ? true_a : a);
-}

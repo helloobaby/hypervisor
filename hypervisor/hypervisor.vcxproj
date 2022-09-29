@@ -74,6 +74,7 @@
     <ClCompile Include="mm.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="vcpu.cpp" />
+    <ClCompile Include="vmcs_helper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arch.h" />
@@ -85,6 +86,7 @@
     <ClInclude Include="type_define.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="vcpu.h" />
+    <ClInclude Include="vmcs_helper.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ia32-doc\out\Doxyfile" />

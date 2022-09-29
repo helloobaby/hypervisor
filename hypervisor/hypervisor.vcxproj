@@ -76,10 +76,22 @@
     <ClCompile Include="vcpu.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="arch.h" />
+    <ClInclude Include="ia32-doc\out\ia32.h" />
+    <ClInclude Include="ia32-doc\out\ia32.hpp" />
+    <ClInclude Include="ia32-doc\out\ia32_compact.h" />
+    <ClInclude Include="ia32-doc\out\ia32_defines_only.h" />
     <ClInclude Include="mm.h" />
     <ClInclude Include="type_define.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="vcpu.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ia32-doc\out\Doxyfile" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="arch.asm" />
+    <MASM Include="vm_exit.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

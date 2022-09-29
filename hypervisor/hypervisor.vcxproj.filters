@@ -9,6 +9,9 @@
       <UniqueIdentifier>{8E41214B-6785-4CFE-B992-037D68949A14}</UniqueIdentifier>
       <Extensions>inf;inv;inx;mof;mc;</Extensions>
     </Filter>
+    <Filter Include="Source Files\ia32-doc">
+      <UniqueIdentifier>{16b77153-07f7-4de0-8104-7695e5271c44}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Inf Include="hypervisor.inf">
@@ -42,5 +45,33 @@
     <ClInclude Include="type_define.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="ia32-doc\out\ia32.h">
+      <Filter>Source Files\ia32-doc</Filter>
+    </ClInclude>
+    <ClInclude Include="ia32-doc\out\ia32.hpp">
+      <Filter>Source Files\ia32-doc</Filter>
+    </ClInclude>
+    <ClInclude Include="ia32-doc\out\ia32_compact.h">
+      <Filter>Source Files\ia32-doc</Filter>
+    </ClInclude>
+    <ClInclude Include="ia32-doc\out\ia32_defines_only.h">
+      <Filter>Source Files\ia32-doc</Filter>
+    </ClInclude>
+    <ClInclude Include="arch.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ia32-doc\out\Doxyfile">
+      <Filter>Source Files\ia32-doc</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="arch.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
+    <MASM Include="vm_exit.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

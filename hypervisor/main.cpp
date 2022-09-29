@@ -9,6 +9,7 @@
 
 void DriverUnload(PDRIVER_OBJECT DriverObject);
 
+
 extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegPath) {
 	
 	DriverObject->DriverUnload = DriverUnload;
@@ -37,5 +38,9 @@ extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Reg
 
 
 void DriverUnload(PDRIVER_OBJECT DriverObject) {
+
+	stop_hypervisor();
+
+
 	return;
 }

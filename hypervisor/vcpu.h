@@ -28,11 +28,25 @@ struct hypervisor_shared {
 
 bool check_hypervisor_can_enable();
 
-bool prepare_vmcs(vmcs& vmcs);
+bool load_vmcs(vmcs& vmcs);
+void prepare_vmcs();
+
 
 void enable_vmx_operation();
 
 void cached_cpu_data();
 
-u64 virtualize_everycpu_ipi_routine(u64 Argument);
+//vmcs½á¹¹
+void init_vmcs_control_fields();
+void init_vmcs_host_state();
+void init_vmcs_guest_state();
+//
 
+void stop_hypervisor();
+
+u64 virtualize_everycpu_ipi_routine(u64 Argument);
+u64 stop_virtualize_everycpu_ipi_routine(u64 Argument);
+
+
+void test_vmcs_field();
+u64 read_ctrl_field(u64 a, u64 true_a);

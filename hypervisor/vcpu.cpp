@@ -13,6 +13,7 @@ cached_data _cached_data;
 
 extern "C" {
     void vmexit_handler(void);
+    u64 vm_launch(void);
 }
 
 void cached_cpu_data() {
@@ -220,7 +221,55 @@ void init_vmcs_guest_state() {
     _sgdt(&gdtr);
     __sidt(&idtr);
 
+    __vmx_vmwrite(VMCS_GUEST_CS_BASE, segment_base(gdtr, x86::read_cs()));
+    __vmx_vmwrite(VMCS_GUEST_SS_BASE, segment_base(gdtr, x86::read_ss()));
+    __vmx_vmwrite(VMCS_GUEST_DS_BASE, segment_base(gdtr, x86::read_ds()));
+    __vmx_vmwrite(VMCS_GUEST_ES_BASE, segment_base(gdtr, x86::read_es()));
+    __vmx_vmwrite(VMCS_GUEST_FS_BASE, __readmsr(IA32_FS_BASE));
+    __vmx_vmwrite(VMCS_GUEST_GS_BASE, __readmsr(IA32_GS_BASE));
+    __vmx_vmwrite(VMCS_GUEST_TR_BASE, segment_base(gdtr, x86::read_tr()));
+    __vmx_vmwrite(VMCS_GUEST_LDTR_BASE, segment_base(gdtr, x86::read_ldtr()));
 
+    __vmx_vmwrite(VMCS_GUEST_CS_LIMIT, __segmentlimit(x86::read_cs().flags));
+    __vmx_vmwrite(VMCS_GUEST_SS_LIMIT, __segmentlimit(x86::read_ss().flags));
+    __vmx_vmwrite(VMCS_GUEST_DS_LIMIT, __segmentlimit(x86::read_ds().flags));
+    __vmx_vmwrite(VMCS_GUEST_ES_LIMIT, __segmentlimit(x86::read_es().flags));
+    __vmx_vmwrite(VMCS_GUEST_FS_LIMIT, __segmentlimit(x86::read_fs().flags));
+    __vmx_vmwrite(VMCS_GUEST_GS_LIMIT, __segmentlimit(x86::read_gs().flags));
+    __vmx_vmwrite(VMCS_GUEST_TR_LIMIT, __segmentlimit(x86::read_tr().flags));
+    __vmx_vmwrite(VMCS_GUEST_LDTR_LIMIT, __segmentlimit(x86::read_ldtr().flags));
+
+    __vmx_vmwrite(VMCS_GUEST_CS_ACCESS_RIGHTS, segment_access(gdtr, x86::read_cs()).flags);
+    __vmx_vmwrite(VMCS_GUEST_SS_ACCESS_RIGHTS, segment_access(gdtr, x86::read_ss()).flags);
+    __vmx_vmwrite(VMCS_GUEST_DS_ACCESS_RIGHTS, segment_access(gdtr, x86::read_ds()).flags);
+    __vmx_vmwrite(VMCS_GUEST_ES_ACCESS_RIGHTS, segment_access(gdtr, x86::read_es()).flags);
+    __vmx_vmwrite(VMCS_GUEST_FS_ACCESS_RIGHTS, segment_access(gdtr, x86::read_fs()).flags);
+    __vmx_vmwrite(VMCS_GUEST_GS_ACCESS_RIGHTS, segment_access(gdtr, x86::read_gs()).flags);
+    __vmx_vmwrite(VMCS_GUEST_TR_ACCESS_RIGHTS, segment_access(gdtr, x86::read_tr()).flags);
+    __vmx_vmwrite(VMCS_GUEST_LDTR_ACCESS_RIGHTS, segment_access(gdtr, x86::read_ldtr()).flags);
+
+    __vmx_vmwrite(VMCS_GUEST_GDTR_BASE, gdtr.base_address);
+    __vmx_vmwrite(VMCS_GUEST_IDTR_BASE, idtr.base_address);
+
+    __vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, gdtr.limit);
+    __vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, idtr.limit);
+
+    __vmx_vmwrite(VMCS_GUEST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
+    __vmx_vmwrite(VMCS_GUEST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
+    __vmx_vmwrite(VMCS_GUEST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
+    __vmx_vmwrite(VMCS_GUEST_DEBUGCTL, __readmsr(IA32_DEBUGCTL));
+    __vmx_vmwrite(VMCS_GUEST_PAT, __readmsr(IA32_PAT));
+    __vmx_vmwrite(VMCS_GUEST_PERF_GLOBAL_CTRL, __readmsr(IA32_PERF_GLOBAL_CTRL));
+
+    __vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, vmx_active);
+
+    __vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
+
+    __vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
+
+    __vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, MAXULONG64);
+
+    __vmx_vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, MAXULONG64);
 
 }
 
@@ -260,7 +309,7 @@ u64 virtualize_everycpu_ipi_routine(u64 Argument) {
     load_vmcs(t->vmcs);     //不执行这个的话vmread\vmwrite都会报错
     prepare_vmcs();
 
-    
+    vm_launch();
     
 
 

@@ -135,13 +135,15 @@ void init_vmcs_control_fields() {
 
 // https://github.com/torvalds/linux/blob/c6dd78fcb8eefa15dd861889e0f59d301cb5230c/tools/testing/selftests/kvm/lib/x86_64/vmx.c#L195
 // 处理器虚拟化技术3.9
+// intel3卷24.5
 void init_vmcs_host_state() {
 
-    u64 exit_controls;      //实际上是32位的字段
-    __vmx_vmread(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,&exit_controls);
-    print("[+] exit_controls %d\n",(u32)exit_controls);
+    //u64 exit_controls;      //实际上是32位的字段
+    //__vmx_vmread(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,&exit_controls);
+    //print("[+] exit_controls %d\n",(u32)exit_controls);
 
-    //host段寄存器
+    // host段寄存器(&0xf8就是保证CPL和TI为0,也就是0环权限和使用GDT表)
+    // 处理器虚拟化技术4.4.4.3 段selector字段的检查
     NT_ASSERT(__vmx_vmwrite(VMCS_HOST_ES_SELECTOR, x86::read_es().flags & 0xf8) == 0);
     __vmx_vmwrite(VMCS_HOST_CS_SELECTOR, x86::read_cs().flags & 0xf8);
     __vmx_vmwrite(VMCS_HOST_SS_SELECTOR, x86::read_ss().flags & 0xf8);
@@ -149,6 +151,10 @@ void init_vmcs_host_state() {
     __vmx_vmwrite(VMCS_HOST_FS_SELECTOR, x86::read_fs().flags & 0xf8);
     __vmx_vmwrite(VMCS_HOST_GS_SELECTOR, x86::read_gs().flags & 0xf8);
     __vmx_vmwrite(VMCS_HOST_TR_SELECTOR, x86::read_tr().flags & 0xf8);
+#ifdef DBG
+    print("[+]es %u\ncs %u\nss %u\nds %u\nfs %u\ngs %u\ntr %u\n", x86::read_es().flags, x86::read_cs().flags, x86::read_ss().flags, x86::read_ds().flags, x86::read_fs().flags, x86::read_gs().flags, x86::read_tr().flags);
+#endif
+
 
     //host控制寄存器
     __vmx_vmwrite(VMCS_HOST_CR0, __readcr0());
@@ -157,22 +163,17 @@ void init_vmcs_host_state() {
 
     // host指针指针
     __vmx_vmwrite(VMCS_HOST_RIP, (u64)(&vmexit_handler));
-    // 分配KERNEL_STACK_SIZE内存给host当堆栈
 
-    //host栈指针
+    // 分配KERNEL_STACK_SIZE内存给host当堆栈
     void* host_stack = ExAllocatePool(NonPagedPool, KERNEL_STACK_SIZE);
-    __vmx_vmwrite(VMCS_HOST_RSP, (size_t)host_stack);
+    u64 host_stack_limit = (((u64)host_stack + KERNEL_STACK_SIZE) & ~0b1111ull) - 8;
+    __vmx_vmwrite(VMCS_HOST_RSP, host_stack_limit);
+    print("[+] host_stack_limit 0x%llx\n", host_stack_limit);
 
     NT_ASSERT(host_stack != 0);
     print("[+][core%x] host_stack %p\n", KeGetCurrentProcessorNumber(),host_stack);
 
-    //host相关msr
-    __vmx_vmwrite(VMCS_HOST_SYSENTER_CS, 0);
-    __vmx_vmwrite(VMCS_HOST_SYSENTER_ESP, 0);
-    __vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, 0);
-    
-    //host段基址   rdfsbase rdgsbase指令执行有2个限制(cr4.fsgsbase cpuid07)
-    __vmx_vmwrite(VMCS_HOST_FS_BASE, __readmsr(IA32_FS_BASE));
+    //host段gs基址(因为host肯定是运行在64位内核模式下,fs没有用)
     __vmx_vmwrite(VMCS_HOST_GS_BASE, __readmsr(IA32_GS_BASE));
     
     segment_descriptor_register_64 idt;

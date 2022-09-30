@@ -1,4 +1,5 @@
 //https://nixhacker.com/developing-hypervisior-from-scratch-part-1/
+//https://developer.apple.com/documentation/hypervisor/
 
 #include<ntifs.h>
 #include<ntddk.h>

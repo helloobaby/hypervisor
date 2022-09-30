@@ -18,7 +18,7 @@ vm_launch proc
   ret
 
 successful_launch:
-  int 3                ;测试(判断vmlaunch是否成功)
+  int 3                ;测试(判断vmlaunch是否成功,如果成功了的话调试器会断到这里)
   mov al, 1
   ret
 vm_launch endp

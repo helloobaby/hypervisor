@@ -105,6 +105,12 @@ void init_vmcs_control_fields() {
     pin_based_ctrl.flags = 0;                               //0初始化  
     write_ctrl_pin_based_safe(pin_based_ctrl);
 
+#ifdef DBG  
+    __vmx_vmread(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, &pin_based_ctrl.flags);
+    print("[+] Pin-based VM-Excution control  %u\n", pin_based_ctrl.flags);
+#endif // DBG
+
+
     // Processor-Based VM-Execution Controls
     // intel卷3 24.6.2
     ia32_vmx_procbased_ctls_register proc_based_ctrl;
@@ -118,6 +124,7 @@ void init_vmcs_control_fields() {
 
     ia32_vmx_exit_ctls_register exit_ctrl;
     exit_ctrl.flags = 0;
+    exit_ctrl.host_address_space_size = 1;          
     write_ctrl_exit_safe(exit_ctrl);
 
     ia32_vmx_entry_ctls_register entry_ctrl;
@@ -309,8 +316,16 @@ u64 virtualize_everycpu_ipi_routine(u64 Argument) {
     load_vmcs(t->vmcs);     //不执行这个的话vmread\vmwrite都会报错
     prepare_vmcs();
 
-    vm_launch();
-    
+    b = vm_launch();
+    if (!b) {
+        print("[+] vmlaunch fail\n");
+
+        size_t error;
+        b = __vmx_vmread(VMCS_VM_INSTRUCTION_ERROR,&error);
+        if (!b) {//error对应intel3卷 30.4
+            print("[+] vmx error %u\n", error);
+        }
+    }
 
 
 

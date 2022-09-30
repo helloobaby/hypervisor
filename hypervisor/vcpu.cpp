@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "arch.h"
 #include "vmcs_helper.h"
+#include "segment.h"
 
 u32 g_logical_processor;
 
@@ -182,12 +183,11 @@ void init_vmcs_host_state() {
     //获得tr基址好像没啥好的办法
     segment_selector tr = x86::read_tr();
     NT_ASSERT(tr.table == 0);               //windows应该是不会用ldt的
-    segment_descriptor_64* tss_descriptor = (segment_descriptor_64*)(gdt.base_address + tr.index * 8);
-    task_state_segment_64* tss_base = (task_state_segment_64*)get_segment_base_by_descriptor(tss_descriptor);
+    u64 tss_base = segment_base(gdt,tr);
 #ifdef DBG
-    print("[+] tss_base %p\n", tss_base);
+    print("[+] tss_base 0x%llx\n", tss_base);
 #endif // DBG
-    __vmx_vmwrite(VMCS_HOST_TR_BASE, (u64)tss_base);
+    __vmx_vmwrite(VMCS_HOST_TR_BASE, tss_base);
 
 }
 

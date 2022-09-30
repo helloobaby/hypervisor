@@ -72,6 +72,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mm.cpp" />
+    <ClCompile Include="segment.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="vcpu.cpp" />
     <ClCompile Include="vmcs_helper.cpp" />
@@ -83,6 +84,7 @@
     <ClInclude Include="ia32-doc\out\ia32_compact.h" />
     <ClInclude Include="ia32-doc\out\ia32_defines_only.h" />
     <ClInclude Include="mm.h" />
+    <ClInclude Include="segment.h" />
     <ClInclude Include="type_define.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="vcpu.h" />

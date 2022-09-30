@@ -79,5 +79,8 @@
     <MASM Include="vm_exit.asm">
       <Filter>Source Files</Filter>
     </MASM>
+    <MASM Include="vm_launch.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

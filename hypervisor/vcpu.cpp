@@ -71,7 +71,6 @@ void enable_vmx_operation() {
 
     auto cr0 = _cached_data._cr0.flags;
     auto cr4 = _cached_data._cr4.flags;
-    //print("[+] ori cr4 %x\n", cr4);
 
     // 3.23.7
     cr4 |= CR4_VMX_ENABLE_FLAG;
@@ -81,7 +80,6 @@ void enable_vmx_operation() {
     cr0 &= __readmsr(IA32_VMX_CR0_FIXED1);
     cr4 |= __readmsr(IA32_VMX_CR4_FIXED0);
     cr4 &= __readmsr(IA32_VMX_CR4_FIXED1);
-    //print("[+] fixed cr4 %x\n", cr4);
 
 
     __writecr0(cr0);
@@ -91,8 +89,8 @@ void enable_vmx_operation() {
 
 #ifdef DBG
     //主要看看fixed 修改了哪些位
-    print("[+] ori cr0 %d  now cr0 %d\n", _cached_data._cr0, __readcr0());
-    print("[+] ori cr4 %d  now cr4 %d\n", _cached_data._cr4, __readcr4());
+    print("[+] ori cr0 %x  now cr0 %x\n", _cached_data._cr0, __readcr0());
+    print("[+] ori cr4 %x  now cr4 %x\n", _cached_data._cr4, __readcr4());
 #endif
 }
 
@@ -135,13 +133,13 @@ void init_vmcs_host_state() {
     print("[+] exit_controls %d\n",(u32)exit_controls);
 
     //host段寄存器
-    NT_ASSERT(__vmx_vmwrite(VMCS_HOST_ES_SELECTOR, x86::read_es().flags) == 0);
-    __vmx_vmwrite(VMCS_HOST_CS_SELECTOR, x86::read_cs().flags);
-    __vmx_vmwrite(VMCS_HOST_SS_SELECTOR, x86::read_ss().flags);
-    __vmx_vmwrite(VMCS_HOST_DS_SELECTOR, x86::read_ds().flags);
-    __vmx_vmwrite(VMCS_HOST_FS_SELECTOR, x86::read_fs().flags);
-    __vmx_vmwrite(VMCS_HOST_GS_SELECTOR, x86::read_gs().flags);
-    __vmx_vmwrite(VMCS_HOST_TR_SELECTOR, x86::read_tr().flags);
+    NT_ASSERT(__vmx_vmwrite(VMCS_HOST_ES_SELECTOR, x86::read_es().flags & 0xf8) == 0);
+    __vmx_vmwrite(VMCS_HOST_CS_SELECTOR, x86::read_cs().flags & 0xf8);
+    __vmx_vmwrite(VMCS_HOST_SS_SELECTOR, x86::read_ss().flags & 0xf8);
+    __vmx_vmwrite(VMCS_HOST_DS_SELECTOR, x86::read_ds().flags & 0xf8);
+    __vmx_vmwrite(VMCS_HOST_FS_SELECTOR, x86::read_fs().flags & 0xf8);
+    __vmx_vmwrite(VMCS_HOST_GS_SELECTOR, x86::read_gs().flags & 0xf8);
+    __vmx_vmwrite(VMCS_HOST_TR_SELECTOR, x86::read_tr().flags & 0xf8);
 
     //host控制寄存器
     __vmx_vmwrite(VMCS_HOST_CR0, __readcr0());
@@ -164,7 +162,7 @@ void init_vmcs_host_state() {
     __vmx_vmwrite(VMCS_HOST_SYSENTER_ESP, 0);
     __vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, 0);
     
-    //host段基址
+    //host段基址   rdfsbase rdgsbase指令执行有2个限制(cr4.fsgsbase cpuid07)
     __vmx_vmwrite(VMCS_HOST_FS_BASE, __readmsr(IA32_FS_BASE));
     __vmx_vmwrite(VMCS_HOST_GS_BASE, __readmsr(IA32_GS_BASE));
     
@@ -180,11 +178,49 @@ void init_vmcs_host_state() {
 
     __vmx_vmwrite(VMCS_HOST_GDTR_BASE,gdt.base_address);
     __vmx_vmwrite(VMCS_HOST_IDTR_BASE,idt.base_address);
-    //__vmx_vmwrite(VMCS_HOST_TR_BASE, reinterpret_cast<size_t>(&cpu->host_tss));
+
+    //获得tr基址好像没啥好的办法
+    segment_selector tr = x86::read_tr();
+    NT_ASSERT(tr.table == 0);               //windows应该是不会用ldt的
+    segment_descriptor_64* tss_descriptor = (segment_descriptor_64*)(gdt.base_address + tr.index * 8);
+    task_state_segment_64* tss_base = (task_state_segment_64*)get_segment_base_by_descriptor(tss_descriptor);
+#ifdef DBG
+    print("[+] tss_base %p\n", tss_base);
+#endif // DBG
+    __vmx_vmwrite(VMCS_HOST_TR_BASE, (u64)tss_base);
 
 }
 
+// https://github.com/torvalds/linux/blob/c6dd78fcb8eefa15dd861889e0f59d301cb5230c/tools/testing/selftests/kvm/lib/x86_64/vmx.c#L235
 void init_vmcs_guest_state() {
+    __vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
+
+    __vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
+    __vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
+
+    __vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7));
+
+    // RIP and RSP are set in vm-launch.asm
+    __vmx_vmwrite(VMCS_GUEST_RSP, 0);
+    __vmx_vmwrite(VMCS_GUEST_RIP, 0);
+
+    __vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
+
+    __vmx_vmwrite(VMCS_GUEST_CS_SELECTOR, x86::read_cs().flags);
+    __vmx_vmwrite(VMCS_GUEST_SS_SELECTOR, x86::read_ss().flags);
+    __vmx_vmwrite(VMCS_GUEST_DS_SELECTOR, x86::read_ds().flags);
+    __vmx_vmwrite(VMCS_GUEST_ES_SELECTOR, x86::read_es().flags);
+    __vmx_vmwrite(VMCS_GUEST_FS_SELECTOR, x86::read_fs().flags);
+    __vmx_vmwrite(VMCS_GUEST_GS_SELECTOR, x86::read_gs().flags);
+    __vmx_vmwrite(VMCS_GUEST_TR_SELECTOR, x86::read_tr().flags);
+    __vmx_vmwrite(VMCS_GUEST_LDTR_SELECTOR, x86::read_ldtr().flags);
+
+    segment_descriptor_register_64 gdtr, idtr;
+    void _sgdt(void*);
+    _sgdt(&gdtr);
+    __sidt(&idtr);
+
+
 
 }
 

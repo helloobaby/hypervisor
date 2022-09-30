@@ -94,6 +94,7 @@
   <ItemGroup>
     <MASM Include="arch.asm" />
     <MASM Include="vm_exit.asm" />
+    <MASM Include="vm_launch.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

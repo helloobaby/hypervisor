@@ -152,7 +152,7 @@ void init_vmcs_host_state() {
     __vmx_vmwrite(VMCS_HOST_GS_SELECTOR, x86::read_gs().flags & 0xf8);
     __vmx_vmwrite(VMCS_HOST_TR_SELECTOR, x86::read_tr().flags & 0xf8);
 #ifdef DBG
-    print("[+]es %u\ncs %u\nss %u\nds %u\nfs %u\ngs %u\ntr %u\n", x86::read_es().flags, x86::read_cs().flags, x86::read_ss().flags, x86::read_ds().flags, x86::read_fs().flags, x86::read_gs().flags, x86::read_tr().flags);
+    print("[+]es %u\n[+]cs %u\n[+]ss %u\n[+]ds %u\n[+]fs %u\n[+]gs %u\n[+]tr %u\n", x86::read_es().flags, x86::read_cs().flags, x86::read_ss().flags, x86::read_ds().flags, x86::read_fs().flags, x86::read_gs().flags, x86::read_tr().flags);
 #endif
 
 
@@ -168,10 +168,11 @@ void init_vmcs_host_state() {
     void* host_stack = ExAllocatePool(NonPagedPool, KERNEL_STACK_SIZE);
     u64 host_stack_limit = (((u64)host_stack + KERNEL_STACK_SIZE) & ~0b1111ull) - 8;
     __vmx_vmwrite(VMCS_HOST_RSP, host_stack_limit);
+#ifdef DBG
     print("[+] host_stack_limit 0x%llx\n", host_stack_limit);
-
-    NT_ASSERT(host_stack != 0);
     print("[+][core%x] host_stack %p\n", KeGetCurrentProcessorNumber(),host_stack);
+#endif // DBG
+    NT_ASSERT(host_stack != 0);         //内存不够
 
     //host段gs基址(因为host肯定是运行在64位内核模式下,fs没有用)
     __vmx_vmwrite(VMCS_HOST_GS_BASE, __readmsr(IA32_GS_BASE));
@@ -188,6 +189,14 @@ void init_vmcs_host_state() {
 
     __vmx_vmwrite(VMCS_HOST_GDTR_BASE,gdt.base_address);
     __vmx_vmwrite(VMCS_HOST_IDTR_BASE,idt.base_address);
+
+#ifdef DBG
+    print("[+] host gdt.base 0x%llx\n", gdt.base_address);
+    print("[+] host idt.base 0x%llx\n", idt.base_address);
+#endif // DBG
+
+
+    
 
     //获得tr基址好像没啥好的办法
     segment_selector tr = x86::read_tr();
@@ -265,19 +274,11 @@ void init_vmcs_guest_state() {
     __vmx_vmwrite(VMCS_GUEST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
     __vmx_vmwrite(VMCS_GUEST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
     __vmx_vmwrite(VMCS_GUEST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
-    __vmx_vmwrite(VMCS_GUEST_DEBUGCTL, __readmsr(IA32_DEBUGCTL));
-    __vmx_vmwrite(VMCS_GUEST_PAT, __readmsr(IA32_PAT));
-    __vmx_vmwrite(VMCS_GUEST_PERF_GLOBAL_CTRL, __readmsr(IA32_PERF_GLOBAL_CTRL));
+    if(_cached_data.cpuid_01.cpuid_feature_information_edx.page_attribute_table)
+        __vmx_vmwrite(VMCS_GUEST_PAT, __readmsr(IA32_PAT));
 
-    __vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, vmx_active);
-
-    __vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
-
-    __vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
-
+    //intel3卷 26.3.1.5最后一项
     __vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, MAXULONG64);
-
-    __vmx_vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, MAXULONG64);
 
 }
 

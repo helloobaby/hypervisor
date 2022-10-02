@@ -3,6 +3,8 @@
 #include "vcpu.h"
 #include "mm.h"
 #include "utils.h"
+#include "wmi_trace.h"
+#include "vcpu.tmh"
 #include "arch.h"
 #include "vmcs_helper.h"
 #include "segment.h"
@@ -93,8 +95,8 @@ void enable_vmx_operation() {
 
 #ifdef DBG
     //主要看看fixed 修改了哪些位
-    print("[+] ori cr0 %x  now cr0 %x\n", _cached_data._cr0, __readcr0());
-    print("[+] ori cr4 %x  now cr4 %x\n", _cached_data._cr4, __readcr4());
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER,"[+] ori cr0 %x  now cr0 %x\n", _cached_data._cr0.flags, __readcr0());
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER,"[+] ori cr4 %x  now cr4 %x\n", _cached_data._cr4.flags, __readcr4());
 #endif
 }
 
@@ -109,7 +111,7 @@ void init_vmcs_control_fields() {
 
 #ifdef DBG  
     __vmx_vmread(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, &pin_based_ctrl.flags);
-    print("[+] Pin-based VM-Excution control  %u\n", pin_based_ctrl.flags);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] Pin-based VM-Excution control  %u\n", pin_based_ctrl.flags);
 #endif // DBG
 
 
@@ -166,7 +168,7 @@ void init_vmcs_host_state() {
     __vmx_vmwrite(VMCS_HOST_GS_SELECTOR, x86::read_gs().flags & 0xf8);
     __vmx_vmwrite(VMCS_HOST_TR_SELECTOR, x86::read_tr().flags & 0xf8);
 #ifdef DBG
-    print("[+] es %u\n[+] cs %u\n[+] ss %u\n[+] ds %u\n[+] fs %u\n[+] gs %u\n[+] tr %u\n", x86::read_es().flags, x86::read_cs().flags, x86::read_ss().flags, x86::read_ds().flags, x86::read_fs().flags, x86::read_gs().flags, x86::read_tr().flags);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] es %u\n[+] cs %u\n[+] ss %u\n[+] ds %u\n[+] fs %u\n[+] gs %u\n[+] tr %u\n", x86::read_es().flags, x86::read_cs().flags, x86::read_ss().flags, x86::read_ds().flags, x86::read_fs().flags, x86::read_gs().flags, x86::read_tr().flags);
 #endif
 
 
@@ -183,8 +185,8 @@ void init_vmcs_host_state() {
     u64 host_stack_limit = (((u64)host_stack + KERNEL_STACK_SIZE) & ~0b1111ull) - 8;
     __vmx_vmwrite(VMCS_HOST_RSP, host_stack_limit);
 #ifdef DBG
-    print("[+] host_stack_limit 0x%llx\n", host_stack_limit);
-    print("[+] [core%x] host_stack %p\n", KeGetCurrentProcessorNumber(),host_stack);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] host_stack_limit 0x%llx\n", host_stack_limit);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] [core%x] host_stack %p\n", KeGetCurrentProcessorNumber(),host_stack);
 #endif // DBG
     NT_ASSERT(host_stack != 0);         //内存不够
 
@@ -205,8 +207,8 @@ void init_vmcs_host_state() {
     __vmx_vmwrite(VMCS_HOST_IDTR_BASE,idt.base_address);
 
 #ifdef DBG
-    print("[+] host gdt.base 0x%llx\n", gdt.base_address);
-    print("[+] host idt.base 0x%llx\n", idt.base_address);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER,"[+] host gdt.base 0x%llx\n", gdt.base_address);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER,"[+] host idt.base 0x%llx\n", idt.base_address);
 #endif // DBG
 
 
@@ -217,7 +219,7 @@ void init_vmcs_host_state() {
     NT_ASSERT(tr.table == 0);               //windows应该是不会用ldt的
     u64 tss_base = segment_base(gdt,tr);
 #ifdef DBG
-    print("[+] tss_base 0x%llx\n", tss_base);
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] tss_base 0x%llx\n", tss_base);
 #endif // DBG
     __vmx_vmwrite(VMCS_HOST_TR_BASE, tss_base);
 
@@ -297,14 +299,14 @@ u64 virtualize_everycpu_ipi_routine(u64 Argument) {
 
     NT_ASSERT(KeGetCurrentIrql() >= DISPATCH_LEVEL);        //保证无法线程切换
 
-    print("[+] virtualize_everycpu_ipi_routine run core %d\n", KeGetCurrentProcessorNumber());
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] virtualize_everycpu_ipi_routine run core %d\n", KeGetCurrentProcessorNumber());
 
     enable_vmx_operation();         //使能VMXON
 
     // 给当前核心分配一份单独的hypervisor数据
     hypervisor* t = (hypervisor*)ExAllocatePool(NonPagedPool, sizeof(hypervisor));
     if (!t) {
-        print("[E] cant alloc hypervisor struct\n");
+        TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[E] cant alloc hypervisor struct\n");
         return 0;
     }
     RtlZeroMemory(t, sizeof(hypervisor));
@@ -322,7 +324,7 @@ u64 virtualize_everycpu_ipi_routine(u64 Argument) {
 
     b = __vmx_on(&phyvmxon);        //进入vmx root模式      (vmx_on两次会导致失败,必须先vmxoff)
     if (b) {    //不等于0,失败
-        print("[E] vmxon failed\n");
+        TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[E] vmxon failed\n");
         return 0;
     }
 
@@ -331,12 +333,12 @@ u64 virtualize_everycpu_ipi_routine(u64 Argument) {
 
     b = vm_launch();
     if (!b) {
-        print("[+] vmlaunch fail\n");
+        TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] vmlaunch fail\n");
 
         size_t error;
         b = __vmx_vmread(VMCS_VM_INSTRUCTION_ERROR,&error);
         if (!b) {//error对应intel3卷 30.4
-            print("[+] vmx error %u\n", error);
+            TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] vmx error %u\n", error);
         }
     }
 

@@ -1,5 +1,11 @@
 #include "utils.h"
 
+#include <ntifs.h>
+#include <ntddk.h>
+#include <wdm.h>
+#include "wmi_trace.h"
+#include "utils.tmh"
+
 void* get_segment_base_by_descriptor(segment_descriptor_64* sd) {
 	u64 base = 0;
 	const auto base_high = sd->base_address_high << (6 * 4);

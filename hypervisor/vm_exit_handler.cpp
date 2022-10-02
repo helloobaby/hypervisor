@@ -3,6 +3,12 @@
 #include "guest-context.h"
 #include "hypercalls.h"
 
+#include <ntifs.h>
+#include <ntddk.h>
+#include <wdm.h>
+#include "wmi_trace.h"
+#include "vm_exit_handler.tmh"
+
 #include <intrin.h>
 
 bool unload_hypervisor = false;
@@ -77,6 +83,7 @@ void vmexit_handler_cpuid(guest_context* vcpu) {
 		vcpu->ebx = 0x2222;
 		vcpu->ecx = 0x3333;
 		vcpu->edx = 0x4444;
+		TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] test cpuid \n");
 		skip_instruction();
 		return;
 	}

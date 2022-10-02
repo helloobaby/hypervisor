@@ -1,5 +1,11 @@
 #include "segment.h"
 
+#include<ntifs.h>
+#include<ntddk.h>
+#include<wdm.h>
+#include "wmi_trace.h"      //这两个头文件依赖上面3个标准库头文件
+#include "segment.tmh"      //
+
 // calculate a segment's base address
 uint64_t segment_base(
     segment_descriptor_register_64 const& gdtr,

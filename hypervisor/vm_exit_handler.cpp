@@ -5,13 +5,14 @@
 #include <intrin.h>
 
 //wrapper
-extern "C" void c_vmexit_handler(guest_context* vcpu);
+extern "C" bool c_vmexit_handler(guest_context* vcpu);
 void dispatch_vm_exit(guest_context* vcpu, const vmx_vmexit_reason reason);
 //
 
 //handlers
 void vmexit_handler_cpuid(guest_context* vcpu);
-void vmexit_handler_rdmsr(guest_context* vcpu);
+void vmexit_handler_msr_access(guest_context* vcpu,bool is_write = false);
+void vmexit_handler_vmxoff(guest_context* vcpu);
 //
 
 //utils
@@ -21,16 +22,22 @@ void inject_hw_exception(uint32_t const vector, uint32_t const error);
 //
 
 
-void c_vmexit_handler(guest_context* vcpu) {
+bool c_vmexit_handler(guest_context* vcpu) {
 	
-	//读取vmexit的原因
+	// 读取vmexit的原因
 	vmx_vmexit_reason reason;
 	__vmx_vmread(VMCS_EXIT_REASON,(uint64_t*)&reason.flags);
 
+	// 如果是客户机要关闭虚拟化(一般在卸载驱动的时候,直接在这处理)
+	if (reason.flags == VMX_EXIT_REASON_EXECUTE_VMXOFF) {
+		vmexit_handler_vmxoff(vcpu);
+		return false;
+	}
+
+
+
 	dispatch_vm_exit(vcpu,reason);
-
-
-
+	return true;
 }
 
 void dispatch_vm_exit(guest_context* vcpu,const vmx_vmexit_reason reason) {
@@ -47,9 +54,11 @@ void dispatch_vm_exit(guest_context* vcpu,const vmx_vmexit_reason reason) {
 		vmexit_handler_cpuid(vcpu);
 		break;
 	case VMX_EXIT_REASON_EXECUTE_RDMSR:
-		vmexit_handler_rdmsr(vcpu);
+		vmexit_handler_msr_access(vcpu);
 		break;
-
+	case VMX_EXIT_REASON_EXECUTE_WRMSR:
+		vmexit_handler_msr_access(vcpu, true);
+		break;
 	default:
 		__debugbreak();
 	}
@@ -95,15 +104,19 @@ void skip_instruction() {
 	__vmx_vmwrite(VMCS_GUEST_RIP, new_rip);
 }
 
-void vmexit_handler_rdmsr(guest_context* vcpu) {
+void vmexit_handler_msr_access(guest_context* vcpu,bool is_write) {
 	
 	if (is_invalid_msr_access(vcpu->ecx)) {	//即使msr bitmap不设置1,这种reserved msr的访问也会(无条件)vm-exit
 		// https://www.unknowncheats.me/forum/3425463-post15.html
 		// intel3卷 31.10.5    
 		// 需要反射一个#GP给guest
-		inject_hw_exception(general_protection, 0);
+		// inject_hw_exception(general_protection, 0);
 		skip_instruction();
 		return;
+	}
+	else { //正常msr access命中
+		
+		//skip_instruction();
 	}
 }
 
@@ -129,4 +142,11 @@ void inject_hw_exception(uint32_t const vector, uint32_t const error) {
 	interrupt_info.valid = 1;
 	__vmx_vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, interrupt_info.flags);
 	__vmx_vmwrite(VMCS_CTRL_VMENTRY_EXCEPTION_ERROR_CODE, error);
+}
+
+void vmexit_handler_vmxoff(guest_context* vcpu) {
+	// 捕获到客户机执行vmxoff,可能是要关闭虚拟化
+
+	__vmx_off();
+	//skip_instruction();
 }

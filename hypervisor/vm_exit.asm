@@ -102,13 +102,13 @@ vmexit_handler proc
 
 	add rsp,120h
 
-    cmp ax,0   ;如果为0的话,关闭虚拟化
+    cmp eax,0   ;如果为0的话,关闭虚拟化
     je @f
     vmresume
 @@:            ;关闭虚拟化
+    
 
-
-    iretq
+    ret
 
 vmexit_handler endp
 

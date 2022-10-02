@@ -6,6 +6,7 @@
 #include "arch.h"
 #include "vmcs_helper.h"
 #include "segment.h"
+#include "hypercalls.h"
 
 u32 g_logical_processor;
 
@@ -15,6 +16,7 @@ extern "C" {
     void vmexit_handler(void);
     u64 vm_launch(void);
 }
+uint64_t vmx_vmcall(hypercall_input& input);
 
 void cached_cpu_data() {
     __cpuid(reinterpret_cast<int*>(&_cached_data.cpuid_01), 1);
@@ -349,7 +351,10 @@ u64 virtualize_everycpu_ipi_routine(u64 Argument) {
 
 u64 stop_virtualize_everycpu_ipi_routine(u64 Argument) {
 
-    __vmx_off();
+    // 应该在这里vmcall,到host里vmxoff,而不是在这里(guest的情况下)直接vmxoff
+    hypercall_input hi;
+    hi.code = hypercall_code::unload;
+    vmx_vmcall(hi);
 
     return 0;
 }

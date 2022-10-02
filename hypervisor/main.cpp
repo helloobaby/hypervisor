@@ -7,6 +7,7 @@
 
 #include "utils.h"
 #include "vcpu.h"
+#include "hypercalls.h"
 
 void DriverUnload(PDRIVER_OBJECT DriverObject);
 
@@ -39,9 +40,6 @@ extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Reg
 
 
 void DriverUnload(PDRIVER_OBJECT DriverObject) {
-
 	stop_hypervisor();
-
-
 	return;
 }

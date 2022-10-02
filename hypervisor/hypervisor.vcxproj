@@ -83,6 +83,7 @@
   <ItemGroup>
     <ClInclude Include="arch.h" />
     <ClInclude Include="guest-context.h" />
+    <ClInclude Include="hypercalls.h" />
     <ClInclude Include="ia32-doc\out\ia32.h" />
     <ClInclude Include="ia32-doc\out\ia32.hpp" />
     <ClInclude Include="ia32-doc\out\ia32_compact.h" />

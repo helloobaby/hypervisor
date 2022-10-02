@@ -1,8 +1,11 @@
 #include "ia32-doc/out/ia32.hpp"
 #include "utils.h"
 #include "guest-context.h"
+#include "hypercalls.h"
 
 #include <intrin.h>
+
+bool unload_hypervisor = false;
 
 //wrapper
 extern "C" bool c_vmexit_handler(guest_context* vcpu);
@@ -13,6 +16,7 @@ void dispatch_vm_exit(guest_context* vcpu, const vmx_vmexit_reason reason);
 void vmexit_handler_cpuid(guest_context* vcpu);
 void vmexit_handler_msr_access(guest_context* vcpu,bool is_write = false);
 void vmexit_handler_vmxoff(guest_context* vcpu);
+void vmexit_handler_vmcall(guest_context* vcpu);
 //
 
 //utils
@@ -28,15 +32,11 @@ bool c_vmexit_handler(guest_context* vcpu) {
 	vmx_vmexit_reason reason;
 	__vmx_vmread(VMCS_EXIT_REASON,(uint64_t*)&reason.flags);
 
-	// 如果是客户机要关闭虚拟化(一般在卸载驱动的时候,直接在这处理)
-	if (reason.flags == VMX_EXIT_REASON_EXECUTE_VMXOFF) {
-		vmexit_handler_vmxoff(vcpu);
-		return false;
-	}
-
-
-
 	dispatch_vm_exit(vcpu,reason);
+
+
+	if (unload_hypervisor)
+		return false;
 	return true;
 }
 
@@ -58,6 +58,9 @@ void dispatch_vm_exit(guest_context* vcpu,const vmx_vmexit_reason reason) {
 		break;
 	case VMX_EXIT_REASON_EXECUTE_WRMSR:
 		vmexit_handler_msr_access(vcpu, true);
+		break;
+	case VMX_EXIT_REASON_EXECUTE_VMCALL:
+		vmexit_handler_vmcall(vcpu);
 		break;
 	default:
 		__debugbreak();
@@ -145,8 +148,17 @@ void inject_hw_exception(uint32_t const vector, uint32_t const error) {
 }
 
 void vmexit_handler_vmxoff(guest_context* vcpu) {
-	// 捕获到客户机执行vmxoff,可能是要关闭虚拟化
 
-	__vmx_off();
-	//skip_instruction();
+	// 捕获到客户机执行vmxoff,
+	// 1.简单的跳过这条指令
+	// 2.注入异常(隐藏hypervisor)
+
+	skip_instruction();
+}
+
+
+void vmexit_handler_vmcall(guest_context* vcpu) {
+	if (vcpu->rax == hypercall_code::unload) {	//卸载虚拟化
+		unload_hypervisor = true;
+	}
 }

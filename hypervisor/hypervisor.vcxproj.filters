@@ -78,6 +78,9 @@
     <ClInclude Include="guest-context.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="hypercalls.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ia32-doc\out\Doxyfile">

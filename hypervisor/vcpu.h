@@ -18,7 +18,7 @@ extern cached_data _cached_data;
 struct hypervisor {
 	alignas(0x1000) vmxon vmxon;
 	alignas(0x1000) vmcs vmcs;
-
+	
 };
 
 

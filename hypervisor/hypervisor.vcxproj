@@ -56,11 +56,13 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <TreatWarningAsError>false</TreatWarningAsError>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <TreatWarningAsError>false</TreatWarningAsError>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -76,9 +78,11 @@
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="vcpu.cpp" />
     <ClCompile Include="vmcs_helper.cpp" />
+    <ClCompile Include="vm_exit_handler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arch.h" />
+    <ClInclude Include="guest-context.h" />
     <ClInclude Include="ia32-doc\out\ia32.h" />
     <ClInclude Include="ia32-doc\out\ia32.hpp" />
     <ClInclude Include="ia32-doc\out\ia32_compact.h" />

@@ -100,9 +100,9 @@ void enable_vmx_operation() {
 void init_vmcs_control_fields() {
 
     // Pin-based VM-Excution control字段
-    // intel卷3 A.3.1
+    // intel卷3 A.3.1 24.6.1 
     ia32_vmx_pinbased_ctls_register pin_based_ctrl;
-    pin_based_ctrl.flags = 0;                               //0初始化  
+    pin_based_ctrl.flags = 0;     //0初始化  
     write_ctrl_pin_based_safe(pin_based_ctrl);
 
 #ifdef DBG  
@@ -115,20 +115,32 @@ void init_vmcs_control_fields() {
     // intel卷3 24.6.2
     ia32_vmx_procbased_ctls_register proc_based_ctrl;
     proc_based_ctrl.flags = 0;
+    proc_based_ctrl.use_msr_bitmaps = 1;    //msr bitmap必须使用,不然每次rdmsr和wdmsr都会vm-exit
+    proc_based_ctrl.activate_secondary_controls = 1;
+    // 分配4K bitmap
+    // 处理器虚拟化技术3.5.15
+    vmx_msr_bitmap* msr_bitmap = (vmx_msr_bitmap*)ExAllocatePool(NonPagedPool, sizeof(vmx_msr_bitmap));
+    NT_ASSERT(msr_bitmap);
+    RtlZeroMemory(msr_bitmap, 0x1000);
+    __vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, get_physical(msr_bitmap));
     write_ctrl_proc_based_safe(proc_based_ctrl);
 
-    //上面proc_based_ctrl.activate_secondary_controls未设置,所以下面这部分写不写都行
+    
     ia32_vmx_procbased_ctls2_register proc_based_ctrl2;
     proc_based_ctrl2.flags = 0;
+    proc_based_ctrl2.enable_rdtscp = 1;         //不置位的话执行rdtscp会出现#UD   
+    proc_based_ctrl2.enable_invpcid = 1;        //同上
+    proc_based_ctrl2.enable_xsaves = 1;         //同上
     write_ctrl_proc_based2_safe(proc_based_ctrl2);
 
     ia32_vmx_exit_ctls_register exit_ctrl;
     exit_ctrl.flags = 0;
-    exit_ctrl.host_address_space_size = 1;          
+    exit_ctrl.host_address_space_size = 1;     
     write_ctrl_exit_safe(exit_ctrl);
 
     ia32_vmx_entry_ctls_register entry_ctrl;
     entry_ctrl.flags = 0;
+    entry_ctrl.ia32e_mode_guest = 1; //intel3卷26.3.1.1第6条
     write_ctrl_entry_safe(entry_ctrl);
 
 }
@@ -152,7 +164,7 @@ void init_vmcs_host_state() {
     __vmx_vmwrite(VMCS_HOST_GS_SELECTOR, x86::read_gs().flags & 0xf8);
     __vmx_vmwrite(VMCS_HOST_TR_SELECTOR, x86::read_tr().flags & 0xf8);
 #ifdef DBG
-    print("[+]es %u\n[+]cs %u\n[+]ss %u\n[+]ds %u\n[+]fs %u\n[+]gs %u\n[+]tr %u\n", x86::read_es().flags, x86::read_cs().flags, x86::read_ss().flags, x86::read_ds().flags, x86::read_fs().flags, x86::read_gs().flags, x86::read_tr().flags);
+    print("[+] es %u\n[+] cs %u\n[+] ss %u\n[+] ds %u\n[+] fs %u\n[+] gs %u\n[+] tr %u\n", x86::read_es().flags, x86::read_cs().flags, x86::read_ss().flags, x86::read_ds().flags, x86::read_fs().flags, x86::read_gs().flags, x86::read_tr().flags);
 #endif
 
 
@@ -170,7 +182,7 @@ void init_vmcs_host_state() {
     __vmx_vmwrite(VMCS_HOST_RSP, host_stack_limit);
 #ifdef DBG
     print("[+] host_stack_limit 0x%llx\n", host_stack_limit);
-    print("[+][core%x] host_stack %p\n", KeGetCurrentProcessorNumber(),host_stack);
+    print("[+] [core%x] host_stack %p\n", KeGetCurrentProcessorNumber(),host_stack);
 #endif // DBG
     NT_ASSERT(host_stack != 0);         //内存不够
 
@@ -214,7 +226,7 @@ void init_vmcs_guest_state() {
     __vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
 
     __vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
-    __vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
+    __vmx_vmwrite(VMCS_GUEST_CR4,__readcr4());
 
     __vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7));
 
@@ -271,9 +283,6 @@ void init_vmcs_guest_state() {
     __vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, gdtr.limit);
     __vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, idtr.limit);
 
-    __vmx_vmwrite(VMCS_GUEST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
-    __vmx_vmwrite(VMCS_GUEST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
-    __vmx_vmwrite(VMCS_GUEST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
     if(_cached_data.cpuid_01.cpuid_feature_information_edx.page_attribute_table)
         __vmx_vmwrite(VMCS_GUEST_PAT, __readmsr(IA32_PAT));
 
@@ -296,7 +305,7 @@ u64 virtualize_everycpu_ipi_routine(u64 Argument) {
         print("[E] cant alloc hypervisor struct\n");
         return 0;
     }
-
+    RtlZeroMemory(t, sizeof(hypervisor));
 
     char b;
     // __vmx_on的参数需要提供一个vmxon结构
@@ -329,8 +338,8 @@ u64 virtualize_everycpu_ipi_routine(u64 Argument) {
         }
     }
 
-
-
+    //成功vmlaunch之后 guest从这里开始运行
+    
 
     
     

@@ -10,3 +10,10 @@ void* get_segment_base_by_descriptor(segment_descriptor_64* sd) {
 	base |= (base_upper32 << 32);
 	return (void*)base;
 }
+
+bool is_invalid_msr_access(u32 msr_index) {
+	if ((msr_index > MSR_ID_LOW_MIN && msr_index < MSR_ID_LOW_MAX) || (msr_index > MSR_ID_HIGH_MIN || msr_index < MSR_ID_HIGH_MAX))
+		return true;
+	else
+		return false;
+}

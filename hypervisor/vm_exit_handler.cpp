@@ -14,7 +14,7 @@
 bool unload_hypervisor = false;
 
 //wrapper
-extern "C" bool c_vmexit_handler(guest_context* vcpu);
+extern "C" void c_vmexit_handler(guest_context* vcpu);
 void dispatch_vm_exit(guest_context* vcpu, const vmx_vmexit_reason reason);
 //
 
@@ -32,7 +32,7 @@ void inject_hw_exception(uint32_t const vector, uint32_t const error);
 //
 
 
-bool c_vmexit_handler(guest_context* vcpu) {
+void c_vmexit_handler(guest_context* vcpu) {
 	
 	// 读取vmexit的原因
 	vmx_vmexit_reason reason;
@@ -40,10 +40,6 @@ bool c_vmexit_handler(guest_context* vcpu) {
 
 	dispatch_vm_exit(vcpu,reason);
 
-
-	if (unload_hypervisor)
-		return false;
-	return true;
 }
 
 void dispatch_vm_exit(guest_context* vcpu,const vmx_vmexit_reason reason) {

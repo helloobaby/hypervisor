@@ -6,6 +6,7 @@
 ;
 ;
 extern c_vmexit_handler:proc
+extern ?unload_hypervisor@@3_NA:dword ; bool类型编译器默认都是以字节访问的
 .code
 
 guest_context struct
@@ -97,12 +98,59 @@ vmexit_handler proc
     mov rcx,rsp ;第一个参数
 
 	sub rsp,28h
-	call c_vmexit_handler
+	call c_vmexit_handler   ;因为这个C函数是有参数的,根据经验,保险起见需要分配0x28个字节(理论上只需要8个字节)
 	add rsp,28h
 
-	add rsp,120h
 
-    cmp eax,0   ;如果为0的话,关闭虚拟化
+    ;处理完之后恢复寄存器
+    mov rax, guest_context.$dr0[rsp]
+    mov dr0, rax
+    mov rax, guest_context.$dr1[rsp]
+    mov dr1, rax
+    mov rax, guest_context.$dr2[rsp]
+    mov dr2, rax
+    mov rax, guest_context.$dr3[rsp]
+    mov dr3, rax
+     mov rax, guest_context.$dr6[rsp]
+    mov dr6, rax
+
+  ; control registers
+    mov rax, guest_context.$cr2[rsp]
+    mov cr2, rax
+    mov rax, guest_context.$cr8[rsp]
+    mov cr8, rax
+
+  ; general-purpose registers
+    mov rax, guest_context.$rax[rsp]
+    mov rcx, guest_context.$rcx[rsp]
+    mov rdx, guest_context.$rdx[rsp]
+    mov rbx, guest_context.$rbx[rsp]
+    mov rbp, guest_context.$rbp[rsp]
+    mov rsi, guest_context.$rsi[rsp]
+    mov rdi, guest_context.$rdi[rsp]
+    mov r8,  guest_context.$r8[rsp]
+    mov r9,  guest_context.$r9[rsp]
+    mov r10, guest_context.$r10[rsp]
+    mov r11, guest_context.$r11[rsp]
+    mov r12, guest_context.$r12[rsp]
+    mov r13, guest_context.$r13[rsp]
+    mov r14, guest_context.$r14[rsp]
+
+    movaps xmm0,guest_context.$xmm0[rsp]
+    movaps xmm1,guest_context.$xmm1[rsp]
+    movaps xmm2,guest_context.$xmm2[rsp]
+    movaps xmm3,guest_context.$xmm3[rsp]
+    movaps xmm4,guest_context.$xmm4[rsp]
+    movaps xmm5,guest_context.$xmm5[rsp]
+
+	add rsp,120h    ;平栈
+    
+    
+    cmp ?unload_hypervisor@@3_NA,1   ;如果为变量1的话,关闭虚拟化
+
+
+
+
     je @f
     vmresume
 @@:            ;关闭虚拟化

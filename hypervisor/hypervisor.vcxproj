@@ -59,6 +59,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <WppEnabled>true</WppEnabled>
       <WppScanConfigurationData>wmi_trace.h</WppScanConfigurationData>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -67,6 +68,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <WppEnabled>true</WppEnabled>
       <WppScanConfigurationData>wmi_trace.h</WppScanConfigurationData>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -1,0 +1,32 @@
+0: kd> k
+ # Child-SP          RetAddr               Call Site
+00 ffffd08a`ba7786b8 fffff805`45aabd72     nt!DbgBreakPointWithStatus
+01 ffffd08a`ba7786c0 fffff805`45aab4f7     nt!KiBugCheckDebugBreak+0x12
+02 ffffd08a`ba778720 fffff805`459ce837     nt!KeBugCheck2+0x957
+03 ffffd08a`ba778e40 fffff805`459dfe69     nt!KeBugCheckEx+0x107
+04 ffffd08a`ba778e80 fffff805`459e0210     nt!KiBugCheckDispatch+0x69
+05 ffffd08a`ba778fc0 fffff805`459de608     nt!KiFastFailDispatch+0xd0
+06 ffffd08a`ba7791a0 fffff805`45a447df     nt!KiRaiseSecurityCheckFailure+0x308
+07 ffffd08a`ba779330 fffff805`45e6c4c3     nt!RtlpGetStackLimits+0x147c7f
+08 ffffd08a`ba779360 fffff805`459d62dd     nt!PspGetSetContextInternal+0xc3
+09 ffffd08a`ba7799a0 fffff805`458f71bd     nt!PspGetSetContextSpecialApc+0x6d
+0a ffffd08a`ba779ab0 fffff805`458699bb     nt!KiDeliverApc+0x19d
+0b ffffd08a`ba779b70 fffff805`458b31be     nt!KiCheckForKernelApcDelivery+0x2b
+0c ffffd08a`ba779ba0 fffff805`4583964a     nt!KiLeaveCriticalRegionUnsafe+0x2e
+0d ffffd08a`ba779bd0 fffff805`45839527     nt!EtwpCloseLogger+0x2e
+0e ffffd08a`ba779c00 fffff805`45838fee     nt!EtwpTraceMessageVa+0x527
+DBGHELP: {c:\symbols}*http://msdl.microsoft.com/download/symbols/ is not a valid store
+0f ffffd08a`ba779d10 fffff806`b0743848     nt!WmiTraceMessage+0x1e
+10 ffffd08a`ba779d50 fffff806`b07436eb     hypervisor!WPP_SF_s+0xe8 [D:\vs-code\hypervisor\hypervisor\x64\Debug\vm_exit_handler.tmh @ 908] 
+11 ffffd08a`ba779dd0 fffff806`b0743463     hypervisor!vmexit_handler_cpuid+0x20b [D:\vs-code\hypervisor\hypervisor\vm_exit_handler.cpp @ 108] 
+12 ffffd08a`ba779e30 fffff806`b0743871     hypervisor!dispatch_vm_exit+0x53 [D:\vs-code\hypervisor\hypervisor\vm_exit_handler.cpp @ 62] 
+13 ffffd08a`ba779e70 fffff806`b074113b     hypervisor!c_vmexit_handler+0x21 [D:\vs-code\hypervisor\hypervisor\vm_exit_handler.cpp @ 43] 
+14 ffffd08a`ba779eb0 ffffd08a`ba779ed8     hypervisor!vmexit_handler+0xdb [D:\vs-code\hypervisor\hypervisor\vm_exit.asm @ 102] 
+15 ffffd08a`ba779eb8 00000000`00000000     0xffffd08a`ba779ed8
+
+
+
+
+
+
+因为irql的问题

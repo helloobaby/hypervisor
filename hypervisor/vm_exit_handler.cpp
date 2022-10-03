@@ -42,6 +42,7 @@ void c_vmexit_handler(guest_context* vcpu) {
 
 }
 
+// 
 void dispatch_vm_exit(guest_context* vcpu,const vmx_vmexit_reason reason) {
 
 	// 读取发生vm-exit的rip 一般在windbg调试的时候看,代码里不使用
@@ -49,6 +50,14 @@ void dispatch_vm_exit(guest_context* vcpu,const vmx_vmexit_reason reason) {
 	// dt vcpu
 	[[maybe_unused]] uint64_t _rip;
 	__vmx_vmread(VMCS_GUEST_RIP, &_rip);
+
+	// host进来的时候eflags中的IF位被自动清0了,我们需要把irql拉到最高
+	//u32 i_effective = KeGetEffectiveIrql();				
+	//u32 i = KeGetCurrentIrql();
+	//TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] vmexit effective irql 0x%x current irql 0x%x\n", i_effective,i);
+
+	KIRQL guest_irql;
+	KeRaiseIrql(HIGH_LEVEL, &guest_irql);
 
 	switch (reason.basic_exit_reason)
 	{
@@ -64,10 +73,14 @@ void dispatch_vm_exit(guest_context* vcpu,const vmx_vmexit_reason reason) {
 	case VMX_EXIT_REASON_EXECUTE_VMCALL:
 		vmexit_handler_vmcall(vcpu);
 		break;
+	case VMX_EXIT_REASON_EXECUTE_VMRESUME:
+
+		break;
 	default:
 		__debugbreak();
 	}
 
+	KeLowerIrql(guest_irql);
 }
 
 
@@ -96,6 +109,9 @@ void vmexit_handler_cpuid(guest_context* vcpu) {
 	vcpu->rdx = regs[3];
 
 	skip_instruction();
+
+	u32 i = KeGetCurrentIrql();
+	TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] [%s] cpuid vmexit irql %d\n",get_current_process_name(),i);
 	return;
 }
 

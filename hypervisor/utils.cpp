@@ -1,8 +1,4 @@
 #include "utils.h"
-
-#include <ntifs.h>
-#include <ntddk.h>
-#include <wdm.h>
 #include "wmi_trace.h"
 #include "utils.tmh"
 
@@ -22,4 +18,8 @@ bool is_invalid_msr_access(u32 msr_index) {
 		return true;
 	else
 		return false;
+}
+
+char* get_current_process_name() {
+	return (char*)PsGetProcessImageFileName(IoGetCurrentProcess());
 }

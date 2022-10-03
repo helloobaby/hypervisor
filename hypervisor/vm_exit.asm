@@ -111,7 +111,7 @@ vmexit_handler proc
     mov dr2, rax
     mov rax, guest_context.$dr3[rsp]
     mov dr3, rax
-     mov rax, guest_context.$dr6[rsp]
+    mov rax, guest_context.$dr6[rsp]
     mov dr6, rax
 
   ; control registers
@@ -147,10 +147,6 @@ vmexit_handler proc
     
     
     cmp ?unload_hypervisor@@3_NA,1   ;如果为变量1的话,关闭虚拟化
-
-
-
-
     je @f
     vmresume
 @@:            ;关闭虚拟化

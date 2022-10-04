@@ -84,6 +84,9 @@
     <ClInclude Include="wmi_trace.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="bug_check.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ia32-doc\out\Doxyfile">

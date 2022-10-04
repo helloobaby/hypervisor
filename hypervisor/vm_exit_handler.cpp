@@ -9,6 +9,8 @@
 #include "wmi_trace.h"
 #include "vm_exit_handler.tmh"
 
+#include "bug_check.h"
+
 #include <intrin.h>
 
 bool unload_hypervisor = false;
@@ -43,12 +45,14 @@ void c_vmexit_handler(guest_context* vcpu) {
 }
 
 // 
+// u  poi(_rip)
+// dt vcpu
+[[maybe_unused]] uint64_t _rip;
+[[maybe_unused]] uint64_t _rsp;
 void dispatch_vm_exit(guest_context* vcpu,const vmx_vmexit_reason reason) {
 
 	// 读取发生vm-exit的rip 一般在windbg调试的时候看,代码里不使用
-	// u  poi(_rip)
-	// dt vcpu
-	[[maybe_unused]] uint64_t _rip;
+	__vmx_vmread(VMCS_GUEST_RSP, &_rsp);
 	__vmx_vmread(VMCS_GUEST_RIP, &_rip);
 
 	// host进来的时候eflags中的IF位被自动清0了,我们需要把irql拉到最高
@@ -110,8 +114,10 @@ void vmexit_handler_cpuid(guest_context* vcpu) {
 
 	skip_instruction();
 
-	u32 i = KeGetCurrentIrql();
-	TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] [%s] cpuid vmexit irql %d\n",get_current_process_name(),i);
+	//u32 i = KeGetCurrentIrql();
+	//TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "[+] [%s] cpuid vmexit \n",get_current_process_name());
+	
+	
 	return;
 }
 
@@ -132,13 +138,14 @@ void vmexit_handler_msr_access(guest_context* vcpu,bool is_write) {
 		// https://www.unknowncheats.me/forum/3425463-post15.html
 		// intel3卷 31.10.5    
 		// 需要反射一个#GP给guest
-		// inject_hw_exception(general_protection, 0);
+		//inject_hw_exception(general_protection, 0);
+		
 		skip_instruction();
+		
 		return;
 	}
-	else { //正常msr access命中
-		
-		//skip_instruction();
+	else { //正常msr access命中 (在msrbitmap中没有设置任何合法msr vmexit 所以是不会到这里来的)
+		KeBugCheck(UNEXPECTED_VMEXIT);
 	}
 }
 
@@ -153,6 +160,7 @@ void inject_hw_exception(uint32_t const vector) {
 	interrupt_info.valid = 1;
 	__vmx_vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, interrupt_info.flags);
 }
+
 
 // inject a vectored exception into the guest (with an error code)
 void inject_hw_exception(uint32_t const vector, uint32_t const error) {

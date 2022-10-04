@@ -230,7 +230,7 @@ void init_vmcs_guest_state() {
     __vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
 
     __vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
-    __vmx_vmwrite(VMCS_GUEST_CR4,__readcr4());
+    __vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
 
     __vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7));
 

@@ -1,0 +1,25 @@
+PpmIdleGuestExecute      PpmIdleGuestExecute proc near           ; DATA XREF: .pdata:FFFFF8017AF0C9B8¡ýo
+PpmIdleGuestExecute                                              ; PpmIdleRegisterDefaultStates+A24B2¡ýo
+PpmIdleGuestExecute
+PpmIdleGuestExecute      var_18          = qword ptr -18h
+PpmIdleGuestExecute
+PpmIdleGuestExecute                      sub     rsp, 38h
+PpmIdleGuestExecute+4                    test    r8d, r8d
+PpmIdleGuestExecute+7                    jnz     short loc_FFFFF8017ACE89F7
+PpmIdleGuestExecute+9                    call    cs:__imp_HalProcessorIdle ; HalpTimerResetProfileAdjustment
+PpmIdleGuestExecute+10                   nop     dword ptr [rax+rax+00h]
+PpmIdleGuestExecute+15                   jmp     short loc_FFFFF8017ACE8A0A
+PpmIdleGuestExecute+17   ; ---------------------------------------------------------------------------
+PpmIdleGuestExecute+17
+PpmIdleGuestExecute+17   loc_FFFFF8017ACE89F7:                   ; CODE XREF: PpmIdleGuestExecute+7¡üj
+PpmIdleGuestExecute+17                   mov     ecx, 400000F0h		?????????????????·Ç·¨msr·ÃÎÊ
+PpmIdleGuestExecute+1C                   rdmsr
+PpmIdleGuestExecute+1E                   shl     rdx, 20h
+PpmIdleGuestExecute+22                   or      rax, rdx
+PpmIdleGuestExecute+25                   mov     [rsp+38h+var_18], rax
+PpmIdleGuestExecute+2A
+PpmIdleGuestExecute+2A   loc_FFFFF8017ACE8A0A:                   ; CODE XREF: PpmIdleGuestExecute+15¡üj
+PpmIdleGuestExecute+2A                   xor     eax, eax
+PpmIdleGuestExecute+2C                   add     rsp, 38h
+PpmIdleGuestExecute+30                   retn
+PpmIdleGuestExecute+30   PpmIdleGuestExecute endp

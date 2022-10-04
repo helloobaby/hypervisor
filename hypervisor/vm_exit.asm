@@ -141,16 +141,32 @@ vmexit_handler proc
     movaps xmm2,guest_context.$xmm2[rsp]
     movaps xmm3,guest_context.$xmm3[rsp]
     movaps xmm4,guest_context.$xmm4[rsp]
-    movaps xmm5,guest_context.$xmm5[rsp]
-
-	add rsp,120h    ;平栈
-    
+    movaps xmm5,guest_context.$xmm5[rsp] 
     
     cmp ?unload_hypervisor@@3_NA,1   ;如果为变量1的话,关闭虚拟化
     je @f
     vmresume
-@@:            ;关闭虚拟化
-    
+@@:            ;关闭虚拟化 2个步骤
+               ;1.将当前host的环境变成guest的环境
+               ;2.vmxoff
+   
+               
+               
+               
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     ret
 

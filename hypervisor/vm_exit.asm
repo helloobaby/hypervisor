@@ -7,6 +7,11 @@
 ;
 extern c_vmexit_handler:proc
 extern ?unload_hypervisor@@3_NA:dword ; bool类型编译器默认都是以字节访问的
+
+.data
+  saved_rax:
+  dq 0          ;这里一定要换行,很奇怪
+
 .code
 
 guest_context struct
@@ -47,7 +52,6 @@ guest_context struct
 
 
 guest_context ends
-
 
 
 vmexit_handler proc
@@ -101,7 +105,6 @@ vmexit_handler proc
 	call c_vmexit_handler   ;因为这个C函数是有参数的,根据经验,保险起见需要分配0x28个字节(理论上只需要8个字节)
 	add rsp,28h
 
-
     ;处理完之后恢复寄存器
     mov rax, guest_context.$dr0[rsp]
     mov dr0, rax
@@ -143,33 +146,80 @@ vmexit_handler proc
     movaps xmm4,guest_context.$xmm4[rsp]
     movaps xmm5,guest_context.$xmm5[rsp] 
     
+
     cmp ?unload_hypervisor@@3_NA,1   ;如果为变量1的话,关闭虚拟化
     je @f
     vmresume
 @@:            ;关闭虚拟化 2个步骤
                ;1.将当前host的环境变成guest的环境
                ;2.vmxoff
-   
-               
-               
-               
+    ;int 3
+    lock xchg qword ptr saved_rax,rax            ;后面做临时寄存器用到了,需要保存一下
+    
+    mov rax, 6800h 
+    vmread rax, rax 
+    mov cr0,rax         ;将cr0恢复为guest的cr0
+                
+    mov rax,6804h
+    vmread rax,rax
+    mov cr4,rax         ;同上
+    
+
+    mov rdx, 0804h      ;VMCS_GUEST_SS_SELECTOR
+    vmread rax, rdx
+    push rax            ;压入guest ss
+
+    mov rdx, 681Ch      ;VMCS_GUEST_RSP
+    vmread rax, rdx
+    push rax            ;压入guest rsp
+
+    mov rdx, 6820h      ;VMCS_GUEST_RFLAGS
+    vmread rax, rdx     
+    push rax            ;压入guest rflags
 
 
+    mov rdx, 0802h     ;VMCS_GUEST_CS_SELECTOR
+    vmread rax, rdx
+    push rax
 
+    mov rdx, 681Eh     ;VMCS_GUEST_RIP
+    vmread rax, rdx 
+    add  rax,3         ;这条rip一定指向vmcall,所以我们要越过vmcall避免死循环
+    push rax           ;压入guest rip
 
+    ;把rax恢复出来
 
+    lock xchg rax,qword ptr saved_rax
 
+    vmxoff
 
-
-
-
-
-
-
-
-
-    ret
+    ;   pop RIP
+    ;   pop CS
+    ;   pop RFLAGS
+    ;   pop RSP
+    ;   pop SS
+    ;
+    iretq
 
 vmexit_handler endp
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 end

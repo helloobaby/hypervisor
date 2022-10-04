@@ -186,6 +186,12 @@ void vmexit_handler_vmxoff(guest_context* vcpu) {
 
 void vmexit_handler_vmcall(guest_context* vcpu) {
 	if (vcpu->rax == hypercall_code::unload) {	//–∂‘ÿ–Èƒ‚ªØ
+		TraceEvents(
+			TRACE_LEVEL_INFORMATION, 
+			TRACE_DRIVER, 
+			"[+] [Core%d]unload hv... \n", 
+			KeGetCurrentProcessorNumber()
+		);
 		unload_hypervisor = true;
 	}
 }

@@ -10,7 +10,13 @@ intel hypervisor
 
 
 
-##### 分支minivt_can_success_run_system:
+##### 分支minivt_can_success_run_system:  
 
 目的是成功vmlaunch,并且能够最小功能正常运行系统
+
+
+
+##### master分支:  
+
+长期维护和测试的分支,可能包含任何新的或者复杂的功能
 

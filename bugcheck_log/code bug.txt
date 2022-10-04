@@ -1,0 +1,98 @@
+
+NMI_HARDWARE_FAILURE (80)
+This is typically due to a hardware malfunction.  The hardware supplier should
+be called.
+Arguments:
+Arg1: 00000000004f4454, 'TDO'
+Arg2: 0000000000000000, Status Byte
+Arg3: 0000000000000000
+Arg4: 0000000000000000
+
+Debugging Details:
+------------------
+
+DBGHELP: {C:\symbols}*http://msdl.microsoft.com/download/symbols/ is not a valid store
+DBGHELP: {C:\symbols}*http://msdl.microsoft.com/download/symbols/ is not a valid store
+DBGHELP: {C:\symbols}*http://msdl.microsoft.com/download/symbols/ is not a valid store
+DBGHELP: {C:\symbols}*http://msdl.microsoft.com/download/symbols/ is not a valid store
+
+KEY_VALUES_STRING: 1
+
+    Key  : Analysis.CPU.mSec
+    Value: 2358
+
+    Key  : Analysis.DebugAnalysisManager
+    Value: Create
+
+    Key  : Analysis.Elapsed.mSec
+    Value: 2360
+
+    Key  : Analysis.Init.CPU.mSec
+    Value: 1046
+
+    Key  : Analysis.Init.Elapsed.mSec
+    Value: 4685
+
+    Key  : Analysis.Memory.CommitPeak.Mb
+    Value: 84
+
+    Key  : WER.OS.Branch
+    Value: rs5_release
+
+    Key  : WER.OS.Timestamp
+    Value: 2018-09-14T14:34:00Z
+
+    Key  : WER.OS.Version
+    Value: 10.0.17763.1
+
+
+VIRTUAL_MACHINE:  VMware
+
+BUGCHECK_CODE:  80
+
+BUGCHECK_P1: 4f4454
+
+BUGCHECK_P2: 0
+
+BUGCHECK_P3: 0
+
+BUGCHECK_P4: 0
+
+PROCESS_NAME:  svchost.exe
+
+IP_IN_FREE_BLOCK: 0
+
+STACK_TEXT:  
+fffff805`4565ee28 fffff806`b0752b5f     : ffffd08a`bcba3000 00000000`00000000 ffffd08a`bcba7030 fffff806`ae52f20b : hypervisor+0x1055
+fffff805`4565ee30 fffff805`4598b83e     : 00000000`00000000 00000000`00000000 00000000`00000000 fffff806`ae944459 : hypervisor+0x2b5f
+fffff805`4565eeb0 fffff805`458283f7     : ffffd08a`bcc49e50 00000000`00000002 ffff6041`8ce61e24 00000000`00000001 : nt!KiIpiGenericCallTarget+0x1e
+fffff805`4565eee0 fffff805`459d5240     : fffff805`444c8000 ffffb503`c3049930 00000000`00000000 00000000`00000000 : nt!KiIpiProcessRequests+0x2a7
+fffff805`4565efb0 fffff805`459d4f61     : ffff96fc`02a22640 ffffd08a`bacced68 00000000`00000000 fffff805`45cf1910 : nt!KiIpiInterruptSubDispatch+0x90
+ffffb503`c30493d0 fffff805`45840d84     : 00000000`00000001 fffff805`444c8000 fffff805`45c58a00 00000000`00000000 : nt!KiIpiInterrupt+0x301
+ffffb503`c3049560 fffff805`458e989e     : 8a000000`6e4e2121 ffffb503`c3049681 00000000`00000001 ffffd08a`c017fb00 : nt!MiSystemImageHasPrivateFixups+0x6c
+ffffb503`c30495a0 fffff805`458776be     : ffffb503`c3049850 8a000000`6e4e2121 00000000`00000000 ffff96cb`00000000 : nt!MiCompleteProtoPteFault+0xabe
+ffffb503`c30496e0 fffff805`458e349d     : 00000000`c0033333 00000000`00000000 fffff805`444c8000 fffff805`444c8000 : nt!MiIssueHardFault+0x22e
+ffffb503`c3049790 fffff805`459dc183     : 00000000`00000027 ffffb503`c30499b0 00000000`00000000 00000000`0000c000 : nt!MmAccessFault+0x3ed
+ffffb503`c3049930 fffff805`459e0de5     : fffff805`45e0a7a0 00000000`00000023 ffffb503`c3049d50 00000000`00000000 : nt!KiPageFault+0x343
+ffffb503`c3049ac8 fffff805`45e0a7a0     : 00000000`00000023 ffffb503`c3049d50 00000000`00000000 00000000`00000000 : nt!memcpy+0xa5
+ffffb503`c3049ad0 fffff805`45e64ed1     : ffffb503`c3049f30 ffffb503`c3049f30 ffffb503`c3049d50 ffffb503`c3049f30 : nt!MiRelocateImage+0x3d4
+ffffb503`c3049c50 fffff805`45e1a8fe     : ffffd08a`c0dd48a0 ffffb503`c3049f30 ffffb503`c3049f30 00000000`00000002 : nt!MiCreateNewSection+0x399
+ffffb503`c3049dc0 fffff805`45e19e3e     : ffffb503`c3049df0 ffff9f09`1f49e290 ffffd08a`c0dd48a0 00000000`00000000 : nt!MiCreateImageOrDataSection+0x2fe
+ffffb503`c3049eb0 fffff805`45e19c08     : ffffb503`c304a0a8 00000000`11000000 ffffb503`c304a221 00000000`00000000 : nt!MiCreateSection+0x10e
+ffffb503`c304a030 fffff805`45e19a04     : ffffb503`c304a288 ffffb503`00000005 ffffb503`c304a1f8 fffff805`4594d68d : nt!MiCreateSectionCommon+0x1f8
+ffffb503`c304a110 fffff805`45dbb8ce     : 00000000`00000020 ffffffff`ffe91ca0 00000000`00000020 ffffffff`80002370 : nt!NtCreateSection+0x54
+ffffb503`c304a180 fffff805`45e6a716     : 00000000`00000060 00000000`00000000 00000000`00000000 ffffd08a`11000000 : nt!PfpFileBuildReadSupport+0x1b6
+ffffb503`c304a280 fffff805`45dbb016     : ffff9f09`00000000 ffff9f09`00000002 00000000`00000000 ffff9f09`00000006 : nt!PfpPrefetchFilesTrickle+0x1be
+ffffb503`c304a370 fffff805`45dbaca9     : ffff9f09`1f593000 ffff9f09`1f593000 ffffb503`c304a590 00000000`00000000 : nt!PfpPrefetchRequestPerform+0x2a2
+ffffb503`c304a4e0 fffff805`45e4e4aa     : 000000c0`00000001 00000000`00000001 ffff9f09`1f593000 ffffd08a`c01cc1e0 : nt!PfpPrefetchRequest+0x129
+ffffb503`c304a560 fffff805`45e4da62     : ffffb503`473ffab8 00000000`00000000 ffffb503`c304a780 fffff805`45e2ee01 : nt!PfSetSuperfetchInformation+0x126
+ffffb503`c304a660 fffff805`459df885     : ffffd08a`c05ab080 00000000`00000000 000000c0`473ffc00 00000000`00000000 : nt!NtSetSystemInformation+0x272
+ffffb503`c304ab00 00007ffd`1f0d2ae4     : 00007ffd`1536637a 00000256`acb1d040 000000c0`473ffb19 000000c0`469fda18 : nt!KiSystemServiceCopyEnd+0x25
+000000c0`473ffa48 00007ffd`1536637a     : 00000256`acb1d040 000000c0`473ffb19 000000c0`469fda18 000000c0`473ffc28 : ntdll!NtSetSystemInformation+0x14
+000000c0`473ffa50 00007ffd`1536690f     : 000000c0`469fd9e0 00000000`00000001 00000000`00000000 00007ffd`15367c49 : sysmain!BtDbDatabasePrefetchPerform+0x2d2
+000000c0`473ffb80 00007ffd`153dc6ab     : 00000000`00000000 00000000`00000005 00000000`00000000 00000000`00000000 : sysmain!BtDbDatabasePrefetch+0xbf
+000000c0`473ffc00 00007ffd`1eec7974     : 00000000`00000000 00000000`00000000 00000000`00000000 00000000`00000000 : sysmain!PfSvPrefetchContextPrefetchThread+0xdb
+000000c0`473ffd60 00007ffd`1f09a271     : 00000000`00000000 00000000`00000000 00000000`00000000 00000000`00000000 : KERNEL32!BaseThreadInitThunk+0x14
+000000c0`473ffd90 00000000`00000000     : 00000000`00000000 00000000`00000000 00000000`00000000 00000000`00000000 : ntdll!RtlUserThreadStart+0x21
+
+这个好像是代码处的一处bug导致的
